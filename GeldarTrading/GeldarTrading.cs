@@ -103,7 +103,7 @@ namespace GeldarTrading
             sqlcreator.EnsureTableStructure(new SqlTable("trade",
                 new SqlColumn("ID", MySqlDbType.Int32) { Primary = true, AutoIncrement = true },
                 new SqlColumn("Username", MySqlDbType.VarChar) { Length = 30 },
-                new SqlColumn("ItemID", MySqlDbType.Text),
+                new SqlColumn("ItemID", MySqlDbType.Int32),
                 new SqlColumn("Stack", MySqlDbType.Int32),
                 new SqlColumn("Moneyamount", MySqlDbType.Int32),
                 new SqlColumn("Active", MySqlDbType.Int32)
@@ -111,8 +111,8 @@ namespace GeldarTrading
             sqlcreator.EnsureTableStructure(new SqlTable("moneyqueue",
                 new SqlColumn("ID", MySqlDbType.Int32) { Primary = true, AutoIncrement = true },
                 new SqlColumn("Receiver", MySqlDbType.VarChar) { Length = 30 },
-                new SqlColumn("Sender", MySqlDbType.VarBinary) { Length = 30 },
-                new SqlColumn("TradeID", MySqlDbType.Text),
+                new SqlColumn("Sender", MySqlDbType.VarChar) { Length = 30 },
+                new SqlColumn("TradeID", MySqlDbType.Int32),
                 new SqlColumn("Moneyamount", MySqlDbType.Int32),
                 new SqlColumn("Active", MySqlDbType.Int32)
                 ));
@@ -180,18 +180,22 @@ namespace GeldarTrading
                     {
                         if (args.TPlayer.inventory[i].netID == item.netID)
                         {
-                            database.Query("INSERT INTO trade(Username, ItemID, Stack, Moneyamount, Active) VALUES(@0, @1, @2, @3, @4);", args.Player.Name, item.netID, stack, money, 1);
-                            if (args.TPlayer.inventory[i].stack == stack)
+                            if (args.TPlayer.inventory[i].stack >= stack)
                             {
-                                args.TPlayer.inventory[i].SetDefaults(0);
+                                database.Query("INSERT INTO trade(Username, ItemID, Stack, Moneyamount, Active) VALUES(@0, @1, @2, @3, @4);", args.Player.Name, item.netID, stack, money, 1);
+                                if (args.TPlayer.inventory[i].stack == stack)
+                                {
+                                    args.TPlayer.inventory[i].SetDefaults(0);
+                                }
+                                else
+                                {
+                                    args.TPlayer.inventory[i].stack -= stack;
+                                }
+                                NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, Terraria.Localization.NetworkText.Empty, args.Player.Index, i);
+                                NetMessage.SendData((int)PacketTypes.PlayerSlot, args.Player.Index, -1, Terraria.Localization.NetworkText.Empty, args.Player.Index, i);
+                                args.Player.SendInfoMessage("{0} of {1} added for {2}.", stack, args.Parameters[1], money);
+                                return;
                             }
-                            else
-                            {
-                                args.TPlayer.inventory[i].stack -= stack;
-                            }
-                            NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, Terraria.Localization.NetworkText.Empty, args.Player.Index, i);
-                            args.Player.SendInfoMessage("{0} of {1} added for {2}.", stack, args.Parameters[1], money);
-                            return;
                         }
                     }
                 }
