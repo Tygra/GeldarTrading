@@ -102,6 +102,8 @@ namespace GeldarTrading
             public bool SEconomy = true;
 
             public int maxsearchlinesperpage = 50;
+            public int maxactivetrades = 5;
+            public int tradeaddtax = 10;
         }
         #endregion
 

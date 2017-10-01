@@ -42,6 +42,7 @@ namespace GeldarTrading
     [ApiVersion(2, 1)]
     public class GeldarTrading : TerrariaPlugin
     {
+        #region Info & Stuff
         public IDbConnection database;
         public String SavePath = TShock.SavePath;
         public GTPlayer[] Playerlist = new GTPlayer[256];
@@ -56,7 +57,9 @@ namespace GeldarTrading
         {
 
         }
+        #endregion
 
+        #region Initialize
         public override void Initialize()
         {
             Commands.ChatCommands.Add(new Command(TradeConfig.Reloadcfg, "tradereload"));
@@ -69,7 +72,9 @@ namespace GeldarTrading
                 TShock.Log.ConsoleError("Config loading failed. Consider deleting it.");
             }
         }
+        #endregion
 
+        #region Dispose
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -80,7 +85,9 @@ namespace GeldarTrading
             }
             base.Dispose(disposing);
         }
+        #endregion
 
+        #region OnInitialize
         private void OnInitialize(EventArgs args)
         {
             switch (TShock.Config.StorageType.ToLower())
@@ -123,6 +130,9 @@ namespace GeldarTrading
                 new SqlColumn("Active", MySqlDbType.Int32)
                 ));
         }
+        #endregion
+
+        #region getItem
         private Item getItem(TSPlayer player, string itemNameOrId, int stack)
         {
             Item item = new Item();
@@ -149,6 +159,7 @@ namespace GeldarTrading
             }
             return item;
         }
+        #endregion
 
         #region Playerlist Join/Leave
         public void OnJoin(JoinEventArgs args)
@@ -162,68 +173,103 @@ namespace GeldarTrading
         }
         #endregion
 
+        #region Trade command
         private void Trade(CommandArgs args)
         {
+            #region Trade add
             if (args.Parameters.Count > 0 && args.Parameters[0].ToLower() == "add")
             {
                 if (args.Parameters.Count == 4)
                 {
-                    int stack;
-                    if (!int.TryParse(args.Parameters[2], out stack))
+                    var Journalpayment = BankAccountTransferOptions.AnnounceToSender;
+                    var selectedPlayer = SEconomyPlugin.Instance.GetBankAccount(args.Player.Name);
+                    var playeramount = selectedPlayer.Balance;
+                    var player = Playerlist[args.Player.Index];
+                    Money moneyamount = -TradeConfig.contents.tradeaddtax;
+                    Money moneyamount2 = TradeConfig.contents.tradeaddtax;
+                    QueryResult reader;
+                    List<string> activequests = new List<string>();
+                    reader = database.QueryReader("SELECT * FROM trade WHERE Username=@0 AND Active=@1;", args.Player.Name, 1);
+                    if (reader.Read())
                     {
-                        args.Player.SendErrorMessage("Invalid stack size");
-                        return;
+                        activequests.Add(reader.Get<string>("Username"));
                     }
-                    if (stack <= 0)
+                    if (activequests.Count < 5)
                     {
-                        args.Player.SendErrorMessage("zero or lower");
-                        return;
-                    }
-                    int money;
-                    if (!int.TryParse(args.Parameters[3], out money))
-                    {
-                        args.Player.SendErrorMessage("Invalidy money");
-                        return;
-                    }
-                    if (money <= 0)
-                    {
-                        args.Player.SendErrorMessage("mone zero or lower");
-                        return;
-                    }
-                    Item item = getItem(args.Player, args.Parameters[1], stack);
-                    if (item == null)
-                    {
-                        return;
-                    }
-                    TSPlayer ply = args.Player;
-                    for (int i = 0; i < 50; i++)
-                    {
-                        if (ply.TPlayer.inventory[i].netID == item.netID)
+                        if (playeramount >= moneyamount2)
                         {
-                            if (ply.TPlayer.inventory[i].stack >= stack)
+                            int stack;
+                            if (!int.TryParse(args.Parameters[2], out stack))
                             {
-                                database.Query("INSERT INTO trade(Username, ItemID, Itemname, Stack, Moneyamount, Active) VALUES(@0, @1, @2, @3, @4, @5);", args.Player.Name, item.netID, item.Name, stack, money, 1);
-                                if (ply.TPlayer.inventory[i].stack == stack)
-                                {
-                                    ply.TPlayer.inventory[i].SetDefaults(0);
-                                }
-                                else
-                                {
-                                    ply.TPlayer.inventory[i].stack -= stack;
-                                }
-                                NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, Terraria.Localization.NetworkText.Empty, ply.Index, i);
-                                NetMessage.SendData((int)PacketTypes.PlayerSlot, ply.Index, -1, Terraria.Localization.NetworkText.Empty, ply.Index, i);
-                                args.Player.SendInfoMessage("{0} of {1} added for {2}.", stack, args.Parameters[1], money);
+                                args.Player.SendErrorMessage("Invalid stack size.");
                                 return;
                             }
+                            if (stack <= 0)
+                            {
+                                args.Player.SendErrorMessage("Stack size can't be zero or less.");
+                                return;
+                            }
+                            int money;
+                            if (!int.TryParse(args.Parameters[3], out money))
+                            {
+                                args.Player.SendErrorMessage("Invalid moneyamount.");
+                                return;
+                            }
+                            if (money <= 0)
+                            {
+                                args.Player.SendErrorMessage("Moneyamount can't be zero or less.");
+                                return;
+                            }
+                            Item item = getItem(args.Player, args.Parameters[1], stack);
+                            if (item == null)
+                            {
+                                return;
+                            }
+                            TSPlayer ply = args.Player;
+                            for (int i = 0; i < 50; i++)
+                            {
+                                if (ply.TPlayer.inventory[i].netID == item.netID)
+                                {
+                                    if (ply.TPlayer.inventory[i].stack >= stack)
+                                    {
+                                        database.Query("INSERT INTO trade(Username, ItemID, Itemname, Stack, Moneyamount, Active) VALUES(@0, @1, @2, @3, @4, @5);", args.Player.Name, item.netID, item.Name, stack, money, 1);
+                                        if (ply.TPlayer.inventory[i].stack == stack)
+                                        {
+                                            ply.TPlayer.inventory[i].SetDefaults(0);
+                                        }
+                                        else
+                                        {
+                                            ply.TPlayer.inventory[i].stack -= stack;
+                                        }
+                                        NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, Terraria.Localization.NetworkText.Empty, ply.Index, i);
+                                        NetMessage.SendData((int)PacketTypes.PlayerSlot, ply.Index, -1, Terraria.Localization.NetworkText.Empty, ply.Index, i);
+                                        SEconomyPlugin.Instance.WorldAccount.TransferToAsync(selectedPlayer, moneyamount, Journalpayment, string.Format("You paid {0} for adding a trade.", moneyamount2, args.Player.Name), string.Format("Trade add"));
+                                        args.Player.SendInfoMessage("{0} of {1} added for {2} and paid {3} for adding a trade.", stack, args.Parameters[1], money, moneyamount2);
+                                        return;
+                                    }
+                                }
+                            }
+                            args.Player.SendErrorMessage("you don't have the item or you don't have anough of it.");
+                            args.Player.SendErrorMessage("Item name provided: {0}. Stack: {1}.", item.Name, stack);
+                            return;
+                        }
+                        else
+                        {
+                            args.Player.SendErrorMessage("You need {0} to add trades. You have {1}.", moneyamount2, selectedPlayer.Balance);
+                            return;
                         }
                     }
-                    args.Player.SendErrorMessage("no item or not enough");
-                    args.Player.SendErrorMessage("item name: {0}", item.Name);
-                    return;
+                    else
+                    {
+                        args.Player.SendErrorMessage("You have the maximum active trades.");
+                        args.Player.SendErrorMessage("Maximum active trade for your rank: {0}.", TradeConfig.contents.maxactivetrades);
+                        return;
+                    }
                 }
             }
+            #endregion
 
+            #region Trade search
             if (args.Parameters.Count > 0 && args.Parameters[0].ToLower() == "search")
             {
                 if (args.Parameters.Count == 3)
@@ -256,7 +302,9 @@ namespace GeldarTrading
 
                 }
             }
+            #endregion
 
+            #region Accept
             if (args.Parameters.Count > 0 && args.Parameters[0].ToLower() == "accept")
             {
                 if (args.Parameters.Count == 2)
@@ -289,26 +337,36 @@ namespace GeldarTrading
                     //give item and successmessage
                 }
             }
+            #endregion
 
+            #region Cancel
             if (args.Parameters.Count > 0 && args.Parameters[0].ToLower() == "cancel")
             {
 
             }
+            #endregion
 
+            #region Trade list
             if (args.Parameters.Count > 0 && args.Parameters[0].ToLower() == "list")
             {
 
             }
+            #endregion
 
+            #region Trade collect
             if (args.Parameters.Count > 0 && args.Parameters[0].ToLower() == "collect")
             {
 
             }
+            #endregion
 
+            #region Trade check
             if (args.Parameters.Count > 0 && args.Parameters[0].ToLower() == "check")
             {
 
             }
+            #endregion
         }
+        #endregion
     }
 }
