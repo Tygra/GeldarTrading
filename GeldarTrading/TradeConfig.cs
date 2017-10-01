@@ -100,6 +100,8 @@ namespace GeldarTrading
         public class Contents
         {
             public bool SEconomy = true;
+
+            public int maxsearchlinesperpage = 50;
         }
         #endregion
 

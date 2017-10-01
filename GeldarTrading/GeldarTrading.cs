@@ -45,7 +45,7 @@ namespace GeldarTrading
         public IDbConnection database;
         public String SavePath = TShock.SavePath;
         internal static string filepath { get { return Path.Combine(TShock.SavePath, "GeldarTrading.json"); } }
-        public override string Author { get { return "Originally IcyPhoenix. Updated, customised: Tygra"; } }
+        public override string Author { get { return "Tygra"; } }
         public override string Description { get { return "Seconomy based Shop"; } }
         public override string Name { get { return "Geldar Trading"; } }
         public override Version Version { get { return new Version(1, 0); } }
@@ -104,6 +104,7 @@ namespace GeldarTrading
                 new SqlColumn("ID", MySqlDbType.Int32) { Primary = true, AutoIncrement = true },
                 new SqlColumn("Username", MySqlDbType.VarChar) { Length = 30 },
                 new SqlColumn("ItemID", MySqlDbType.Int32),
+                new SqlColumn("Itemname", MySqlDbType.Text),
                 new SqlColumn("Stack", MySqlDbType.Int32),
                 new SqlColumn("Moneyamount", MySqlDbType.Int32),
                 new SqlColumn("Active", MySqlDbType.Int32)
@@ -176,29 +177,91 @@ namespace GeldarTrading
                     {
                         return;
                     }
+                    TSPlayer ply = args.Player;
                     for (int i = 0; i < 50; i++)
                     {
-                        if (args.TPlayer.inventory[i].netID == item.netID)
+                        if (ply.TPlayer.inventory[i].netID == item.netID)
                         {
-                            if (args.TPlayer.inventory[i].stack >= stack)
+                            if (ply.TPlayer.inventory[i].stack >= stack)
                             {
-                                database.Query("INSERT INTO trade(Username, ItemID, Stack, Moneyamount, Active) VALUES(@0, @1, @2, @3, @4);", args.Player.Name, item.netID, stack, money, 1);
-                                if (args.TPlayer.inventory[i].stack == stack)
+                                database.Query("INSERT INTO trade(Username, ItemID, Itemname, Stack, Moneyamount, Active) VALUES(@0, @1, @2, @3, @4, @5);", args.Player.Name, item.netID, item.Name, stack, money, 1);
+                                if (ply.TPlayer.inventory[i].stack == stack)
                                 {
-                                    args.TPlayer.inventory[i].SetDefaults(0);
+                                    ply.TPlayer.inventory[i].SetDefaults(0);
                                 }
                                 else
                                 {
-                                    args.TPlayer.inventory[i].stack -= stack;
+                                    ply.TPlayer.inventory[i].stack -= stack;
                                 }
-                                NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, Terraria.Localization.NetworkText.Empty, args.Player.Index, i);
-                                NetMessage.SendData((int)PacketTypes.PlayerSlot, args.Player.Index, -1, Terraria.Localization.NetworkText.Empty, args.Player.Index, i);
+                                NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, Terraria.Localization.NetworkText.Empty, ply.Index, i);
+                                NetMessage.SendData((int)PacketTypes.PlayerSlot, ply.Index, -1, Terraria.Localization.NetworkText.Empty, ply.Index, i);
                                 args.Player.SendInfoMessage("{0} of {1} added for {2}.", stack, args.Parameters[1], money);
                                 return;
                             }
                         }
                     }
+                    args.Player.SendErrorMessage("no item or not enough");
+                    args.Player.SendErrorMessage("item name: {0}", item.Name);
+                    return;
                 }
+            }
+
+            if (args.Parameters.Count > 0 && args.Parameters[0].ToLower() == "search")
+            {
+                if (args.Parameters.Count == 3)
+                {
+                    int pageNumber;
+                    if (!PaginationTools.TryParsePageNumber(args.Parameters, 1, args.Player, out pageNumber))
+                    {
+                        return;
+                    }
+                    QueryResult reader;
+                    string itemname = string.Join(" ", args.Parameters[2]);
+                    List<string> result = new List<string>();
+                    reader = database.QueryReader("SELECT * FROM trade WHERE Itemname=@0 AND Active=@1;", itemname, 1);
+                    if (reader.Read())
+                    {
+                        result.Add(String.Format("{0}" + " - " + "{1}" + " - " + "{2}" + " - " + "{3}", reader.Get<int>("ID"), reader.Get<string>("Itemname"), reader.Get<int>("Stack"), reader.Get<int>("Moneyamount")));
+                    }
+                    else
+                    {
+                        args.Player.SendErrorMessage("no items found");
+                        return;
+                    }
+                    PaginationTools.SendPage(args.Player, pageNumber, result,
+                    new PaginationTools.Settings
+                    {
+                        MaxLinesPerPage = TradeConfig.contents.maxsearchlinesperpage,
+                        HeaderFormat = "ID - Itemname - Stack - Cost ({0}/{1})",
+                        FooterFormat = "Type {0}trade search {{0}} for more.".SFormat(Commands.Specifier)
+                    });
+
+                }
+            }
+
+            if (args.Parameters.Count > 0 && args.Parameters[0].ToLower() == "accept")
+            {
+
+            }
+
+            if (args.Parameters.Count > 0 && args.Parameters[0].ToLower() == "cancel")
+            {
+
+            }
+
+            if (args.Parameters.Count > 0 && args.Parameters[0].ToLower() == "list")
+            {
+
+            }
+
+            if (args.Parameters.Count > 0 && args.Parameters[0].ToLower() == "collect")
+            {
+
+            }
+
+            if (args.Parameters.Count > 0 && args.Parameters[0].ToLower() == "check")
+            {
+
             }
         }
     }
