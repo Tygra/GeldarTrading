@@ -1,9 +1,7 @@
 C:\Users\tygra\Desktop\Plugins\GeldarTrading\GeldarTrading\bin\Debug\GeldarTrading.dll
 C:\Users\tygra\Desktop\Plugins\GeldarTrading\GeldarTrading\bin\Debug\GeldarTrading.pdb
 C:\Users\tygra\Desktop\Plugins\GeldarTrading\GeldarTrading\bin\Debug\Wolfje.Plugins.SEconomy.dll
-C:\Users\tygra\Desktop\Plugins\GeldarTrading\GeldarTrading\bin\Debug\HttpServer.dll
-C:\Users\tygra\Desktop\Plugins\GeldarTrading\GeldarTrading\bin\Debug\BCrypt.Net.dll
-C:\Users\tygra\Desktop\Plugins\GeldarTrading\GeldarTrading\obj\Debug\GeldarTrading.csprojResolveAssemblyReference.cache
 C:\Users\tygra\Desktop\Plugins\GeldarTrading\GeldarTrading\obj\Debug\GeldarTrading.csproj.CoreCompileInputs.cache
 C:\Users\tygra\Desktop\Plugins\GeldarTrading\GeldarTrading\obj\Debug\GeldarTrading.dll
 C:\Users\tygra\Desktop\Plugins\GeldarTrading\GeldarTrading\obj\Debug\GeldarTrading.pdb
+C:\Users\Tygra\Desktop\Plugins\GeldarTrading\GeldarTrading\obj\Debug\GeldarTrading.csprojResolveAssemblyReference.cache

@@ -53,7 +53,7 @@ namespace GeldarTrading
         public override Version Version { get { return new Version(1, 0); } }
 
         public GeldarTrading(Main game)
-            :base(game)
+            : base(game)
         {
 
         }
@@ -176,9 +176,26 @@ namespace GeldarTrading
         #region Trade command
         private void Trade(CommandArgs args)
         {
+            if (args.Parameters.Count < 1)
+            {
+                args.Player.SendInfoMessage("Double qoutes around item names are required.");
+                args.Player.SendInfoMessage("Available commands /trade add/search/accep/cancel/list/collect/check.");
+                return;
+            }
+            
             #region Trade add
             if (args.Parameters.Count > 0 && args.Parameters[0].ToLower() == "add")
             {
+                if (args.Parameters.Count == 1)
+                {
+                    args.Player.SendInfoMessage("Info: Double qoutes around item names are required.");
+                    args.Player.SendInfoMessage("Info:    /trade add \"item name\" amount moneyamount");
+                    args.Player.SendInfoMessage("Example: /trade add \"Cactus Sword\" 1 100");
+                    args.Player.SendInfoMessage("Info: There is a trade add cost which grows by level.");
+                    //trade add costs missing
+                    return;
+                }
+
                 if (args.Parameters.Count == 4)
                 {
                     var Journalpayment = BankAccountTransferOptions.AnnounceToSender;
@@ -266,40 +283,50 @@ namespace GeldarTrading
                         return;
                     }
                 }
+                else
+                {
+                    args.Player.SendErrorMessage("Invalid syntax. Use /trade add to get syntax information");
+                    return;
+                }
             }
             #endregion
 
             #region Trade search
             if (args.Parameters.Count > 0 && args.Parameters[0].ToLower() == "search")
             {
-                if (args.Parameters.Count == 3)
+                if (args.Parameters.Count == 1)
+                {
+                    args.Player.SendInfoMessage("Info: Double qoutes around item names are required.");
+                    args.Player.SendInfoMessage("With search, you can get the trade ID.");
+                    args.Player.SendInfoMessage("Info:    /trade search \"item name\"");
+                    args.Player.SendInfoMessage("Example: /trade search \"Cactus Sword\"");
+                    return;
+                }
+
+                if (args.Parameters.Count > 1)
                 {
                     int pageNumber;
-                    if (!PaginationTools.TryParsePageNumber(args.Parameters, 1, args.Player, out pageNumber))
-                    {
+                    int pageParamIndex = 2;
+                    if (!PaginationTools.TryParsePageNumber(args.Parameters, pageParamIndex, args.Player, out pageNumber))                    
                         return;
-                    }
-                    QueryResult reader;
-                    string itemname = string.Join(" ", args.Parameters[2]);
+                                        
+                    string itemname = string.Join(" ", args.Parameters[1]);
                     List<string> result = new List<string>();
-                    reader = database.QueryReader("SELECT * FROM trade WHERE Itemname=@0 AND Active=@1;", itemname, 1);
-                    if (reader.Read())
+                    using (var reader = database.QueryReader("SELECT * FROM trade WHERE Itemname=@0 AND Active=@1;", itemname, 1))
                     {
-                        result.Add(String.Format("{0}" + " - " + "{1}" + " - " + "{2}" + " - " + "{3}", reader.Get<int>("ID"), reader.Get<string>("Itemname"), reader.Get<int>("Stack"), reader.Get<int>("Moneyamount")));
-                    }
-                    else
-                    {
-                        args.Player.SendErrorMessage("no items found");
-                        return;
+                        while (reader.Read())
+                        {
+                            result.Add(String.Format("{0}" + " - " + "{1}" + " - " + "{2}" + " - " + "{3}", reader.Get<int>("ID"), reader.Get<string>("Itemname"), reader.Get<int>("Stack"), reader.Get<int>("Moneyamount")));
+                        }
                     }
                     PaginationTools.SendPage(args.Player, pageNumber, result,
                     new PaginationTools.Settings
                     {
-                        MaxLinesPerPage = TradeConfig.contents.maxsearchlinesperpage,
+                        MaxLinesPerPage = 50,
                         HeaderFormat = "ID - Itemname - Stack - Cost ({0}/{1})",
-                        FooterFormat = "Type {0}trade search {{0}} for more.".SFormat(Commands.Specifier)
+                        FooterFormat = "Type {0}trade search {1} {{0}} for more.".SFormat(Commands.Specifier, itemname),
+                        NothingToDisplayString = "No items found by that name"
                     });
-
                 }
             }
             #endregion
@@ -309,32 +336,67 @@ namespace GeldarTrading
             {
                 if (args.Parameters.Count == 2)
                 {
-                    //inventory check
                     var Journalpayment = BankAccountTransferOptions.AnnounceToSender;
                     var selectedPlayer = SEconomyPlugin.Instance.GetBankAccount(args.Player.User.Name);
-                    var playeramoun = selectedPlayer.Balance;
+                    var playeramount = selectedPlayer.Balance;
                     var player = Playerlist[args.Player.Index];
-                    string param2 = string.Join(" ", args.Parameters[2]);
-                    QueryResult reader;
-                    List<string> seller = new List<string>();
+                    string param2 = string.Join(" ", args.Parameters[1]);
+                    List<string> username = new List<string>();
+                    List<string> itemName = new List<string>();
                     List<int> cost = new List<int>();
-                    int id = Convert.ToInt32(param2);
+                    List<int> itemid = new List<int>();
+                    List<int> amount = new List<int>();
+                    var id = Convert.ToInt32(param2);
                     if (id <= 0)
                     {
-                        args.Player.SendErrorMessage("zero or lower");
+                        args.Player.SendErrorMessage("ID can't be zero or less.");
                         return;
                     }
-                    reader = database.QueryReader("SELECT * FROM trade WHERE ID=@;", id);
-                    if (reader.Read())
+                    if (args.Player.InventorySlotAvailable)
                     {
-                        seller.Add(reader.Get<string>("Username"));
-                        cost.Add(reader.Get<int>("Moneyamount"));
+                        using (var reader = database.QueryReader("SELECT * FROM trade WHERE ID=@;", id))
+                        {
+                            while (reader.Read())
+                            {
+                                username.Add(reader.Get<string>("Username"));
+                                itemName.Add(reader.Get<string>("Itemname"));
+                                cost.Add(reader.Get<int>("Moneyamount"));
+                                itemid.Add(reader.Get<int>("ItemID"));
+                                amount.Add(reader.Get<int>("Stack"));
+                            }
+                        }
+                        string receiver = username.ElementAt(0);
+                        string itemname = itemName.ElementAt(0);
+                        int money = cost.ElementAt(0);
+                        int item = itemid.ElementAt(0);
+                        int stack = amount.ElementAt(0);
+                        args.Player.SendInfoMessage(receiver, money, item, stack, itemname);
+                        if (playeramount >= money)
+                        {
+                            database.Query("UPDATE trade SET Active=@0 WHERE ID=@1;", 0, id);
+                            database.Query("INSERT INTO moneyqueue(Receiver, Sender, TradeID, Moneyamount, Active) VALUES(@0, @1, @2, @3, @4);", receiver, args.Player.Name, id, money, 1);
+                            SEconomyPlugin.Instance.WorldAccount.TransferToAsync(selectedPlayer, money, Journalpayment, string.Format("You paid {0} for {1} of {2}.", money, stack, itemname, args.Player.Name), string.Format("Trade accept. TC: {0}. Item: {1}", money, itemname));
+                            Item itemById = TShock.Utils.GetItemById(item);
+                            args.Player.GiveItem(itemById.type, itemById.Name, itemById.width, itemById.height, stack, 0);
+                        }
+                        else
+                        {
+                            args.Player.SendErrorMessage("You don't have enough Terra Coins to buy this item.");
+                            args.Player.SendErrorMessage("You need : {0}. You have: {1}.", money, selectedPlayer.Balance);
+                            return;
+                        }
                     }
-                    var receiver = seller.ElementAt(0);
-                    int money = cost.ElementAt(0);
-                    database.Query("UPDATE trade SET Active=@0 WHERE ID=@1;", 0, id);
-                    database.Query("INSERT INTO moneyqueue(Receiver, Sender, TradeID, Moneyamount, Active) VALUES(@0, @1, @2, @3, @4);", receiver, args.Player.Name, id, money, 1);
-                    //give item and successmessage
+                    else
+                    {
+                        args.Player.SendErrorMessage("Your inventory seems to be full. Free up one slot, and try again.");
+                        return;
+                    }
+                }
+                else
+                {
+                    args.Player.SendErrorMessage("Invalid syntax. Use /trade accept ID.");
+                    args.Player.SendErrorMessage("Get the ID from /trade search \"item name\". Double qoutes are required.");
+                    return;
                 }
             }
             #endregion
@@ -363,9 +425,33 @@ namespace GeldarTrading
             #region Trade check
             if (args.Parameters.Count > 0 && args.Parameters[0].ToLower() == "check")
             {
-
+                int pageNumber;
+                if (!PaginationTools.TryParsePageNumber(args.Parameters, 1, args.Player, out pageNumber))
+                {
+                    return;
+                }
+                QueryResult reader;
+                List<string> check = new List<string>();
+                reader = database.QueryReader("SELECT * FROM trade WHERE Username=@0 AND Active=@1;", args.Player.Name, 1);
+                if (reader.Read())
+                {
+                    check.Add(String.Format("{0}" + " - " + "{1}" + " - " + "{2}" + " - " + "{3}", reader.Get<int>("ID"), reader.Get<string>("Itemname"), reader.Get<int>("Stack"), reader.Get<int>("Moneyamount")));
+                }
+                else
+                {
+                    args.Player.SendErrorMessage("You don't have any active trades.");
+                    return;
+                }
+                PaginationTools.SendPage(args.Player, pageNumber, check,
+                    new PaginationTools.Settings
+                    {
+                        MaxLinesPerPage = 5,
+                        HeaderFormat = "ID - Itemname - Stack - Cost ({0}/{1})",
+                        FooterFormat = "Type {0}trade check {{0}} for more.".SFormat(Commands.Specifier)
+                    });
             }
             #endregion
+            
         }
         #endregion
     }
