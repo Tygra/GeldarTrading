@@ -56,12 +56,14 @@
     <Reference Include="TShockAPI">
       <HintPath>..\..\..\tshock_4.3.24\ServerPlugins\TShockAPI.dll</HintPath>
     </Reference>
-    <Reference Include="Wolfje.Plugins.SEconomy">
-      <HintPath>..\..\..\Onedrive\seconomy-u21\Wolfje.Plugins.SEconomy.dll</HintPath>
+    <Reference Include="Wolfje.Plugins.SEconomy, Version=1.0.21.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\GeldarV2\GeldarV2\bin\Debug\Wolfje.Plugins.SEconomy.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="GeldarTrading.cs" />
+    <Compile Include="GTPlayer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TradeConfig.cs" />
   </ItemGroup>

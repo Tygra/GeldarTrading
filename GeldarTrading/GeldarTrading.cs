@@ -44,6 +44,7 @@ namespace GeldarTrading
     {
         public IDbConnection database;
         public String SavePath = TShock.SavePath;
+        public GTPlayer[] Playerlist = new GTPlayer[256];
         internal static string filepath { get { return Path.Combine(TShock.SavePath, "GeldarTrading.json"); } }
         public override string Author { get { return "Tygra"; } }
         public override string Description { get { return "Seconomy based Shop"; } }
@@ -61,6 +62,8 @@ namespace GeldarTrading
             Commands.ChatCommands.Add(new Command(TradeConfig.Reloadcfg, "tradereload"));
             Commands.ChatCommands.Add(new Command(Trade, "trade"));
             ServerApi.Hooks.GameInitialize.Register(this, OnInitialize);
+            ServerApi.Hooks.ServerJoin.Register(this, OnJoin);
+            ServerApi.Hooks.ServerLeave.Register(this, OnLeave);
             if (!TradeConfig.ReadConfig())
             {
                 TShock.Log.ConsoleError("Config loading failed. Consider deleting it.");
@@ -71,7 +74,9 @@ namespace GeldarTrading
         {
             if (disposing)
             {
-                ServerApi.Hooks.GameInitialize.Deregister(this, OnInitialize);                
+                ServerApi.Hooks.GameInitialize.Deregister(this, OnInitialize);
+                ServerApi.Hooks.ServerJoin.Deregister(this, OnJoin);
+                ServerApi.Hooks.ServerLeave.Deregister(this, OnLeave);
             }
             base.Dispose(disposing);
         }
@@ -144,6 +149,19 @@ namespace GeldarTrading
             }
             return item;
         }
+
+        #region Playerlist Join/Leave
+        public void OnJoin(JoinEventArgs args)
+        {
+            Playerlist[args.Who] = new GTPlayer(args.Who);
+        }
+
+        public void OnLeave(LeaveEventArgs args)
+        {
+            Playerlist[args.Who] = null;
+        }
+        #endregion
+
         private void Trade(CommandArgs args)
         {
             if (args.Parameters.Count > 0 && args.Parameters[0].ToLower() == "add")
@@ -241,7 +259,21 @@ namespace GeldarTrading
 
             if (args.Parameters.Count > 0 && args.Parameters[0].ToLower() == "accept")
             {
-
+                if (args.Parameters.Count == 2)
+                {
+                    QueryResult reader;
+                    var Journalpayment = BankAccountTransferOptions.AnnounceToSender;
+                    var selectedPlayer = SEconomyPlugin.Instance.GetBankAccount(args.Player.User.Name);
+                    var playeramoun = selectedPlayer.Balance;
+                    var player = Playerlist[args.Player.Index];
+                    string param2 = string.Join(" ", args.Parameters[2]);
+                    int id = Convert.ToInt32(param2);
+                    if (id <= 0)
+                    {
+                        args.Player.SendErrorMessage("zero or lower");
+                        return;
+                    }
+                }
             }
 
             if (args.Parameters.Count > 0 && args.Parameters[0].ToLower() == "cancel")
