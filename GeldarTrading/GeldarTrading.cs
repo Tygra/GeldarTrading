@@ -261,18 +261,32 @@ namespace GeldarTrading
             {
                 if (args.Parameters.Count == 2)
                 {
-                    QueryResult reader;
+                    //inventory check
                     var Journalpayment = BankAccountTransferOptions.AnnounceToSender;
                     var selectedPlayer = SEconomyPlugin.Instance.GetBankAccount(args.Player.User.Name);
                     var playeramoun = selectedPlayer.Balance;
                     var player = Playerlist[args.Player.Index];
                     string param2 = string.Join(" ", args.Parameters[2]);
+                    QueryResult reader;
+                    List<string> seller = new List<string>();
+                    List<int> cost = new List<int>();
                     int id = Convert.ToInt32(param2);
                     if (id <= 0)
                     {
                         args.Player.SendErrorMessage("zero or lower");
                         return;
                     }
+                    reader = database.QueryReader("SELECT * FROM trade WHERE ID=@;", id);
+                    if (reader.Read())
+                    {
+                        seller.Add(reader.Get<string>("Username"));
+                        cost.Add(reader.Get<int>("Moneyamount"));
+                    }
+                    var receiver = seller.ElementAt(0);
+                    int money = cost.ElementAt(0);
+                    database.Query("UPDATE trade SET Active=@0 WHERE ID=@1;", 0, id);
+                    database.Query("INSERT INTO moneyqueue(Receiver, Sender, TradeID, Moneyamount, Active) VALUES(@0, @1, @2, @3, @4);", receiver, args.Player.Name, id, money, 1);
+                    //give item and successmessage
                 }
             }
 
