@@ -63,8 +63,8 @@ namespace GeldarTrading
         #region Initialize
         public override void Initialize()
         {
-            Commands.ChatCommands.Add(new Command(TradeConfig.Reloadcfg, "tradereload"));
-            Commands.ChatCommands.Add(new Command(Trade, "trade"));
+            Commands.ChatCommands.Add(new Command("geldar.admin", TradeConfig.Reloadcfg, "tradereload"));
+            Commands.ChatCommands.Add(new Command("geldar.trade", Trade, "trade"));
             ServerApi.Hooks.GameInitialize.Register(this, OnInitialize);
             ServerApi.Hooks.ServerJoin.Register(this, OnJoin);
             ServerApi.Hooks.ServerLeave.Register(this, OnLeave);
