@@ -103,7 +103,15 @@ namespace GeldarTrading
 
             public int maxsearchlinesperpage = 50;
             public int maxactivetrades = 5;
-            public int tradeaddtax = 10;
+
+            public int level5addcost = 10;
+            public int level10addcost = 20;
+            public int level20addcost = 40;
+            public int level30addcost = 80;
+            public int level40addcost = 160;
+            public int level50addcost = 320;
+            public int level60addcost = 640;
+            public int maxaddcost = 1200;
         }
         #endregion
 

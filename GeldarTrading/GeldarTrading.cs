@@ -25,6 +25,7 @@ using Microsoft.Xna.Framework;
 //Terraria related refs
 using Terraria;
 using Terraria.ID;
+using Terraria.Localization;
 using TerrariaApi.Server;
 using TShockAPI;
 using TShockAPI.Hooks;
@@ -203,8 +204,6 @@ namespace GeldarTrading
                     var selectedPlayer = SEconomyPlugin.Instance.GetBankAccount(args.Player.Name);
                     var playeramount = selectedPlayer.Balance;
                     var player = Playerlist[args.Player.Index];
-                    Money moneyamount = -TradeConfig.contents.tradeaddtax;
-                    Money moneyamount2 = TradeConfig.contents.tradeaddtax;
                     QueryResult reader;
                     List<string> activequests = new List<string>();
                     reader = database.QueryReader("SELECT * FROM trade WHERE Username=@0 AND Active=@1;", args.Player.Name, 1);
@@ -214,68 +213,204 @@ namespace GeldarTrading
                     }
                     if (activequests.Count < 5)
                     {
-                        if (playeramount >= moneyamount2)
+                        int stack;
+                        if (!int.TryParse(args.Parameters[2], out stack))
                         {
-                            int stack;
-                            if (!int.TryParse(args.Parameters[2], out stack))
+                            args.Player.SendErrorMessage("Invalid stack size.");
+                            return;
+                        }
+                        if (stack <= 0)
+                        {
+                            args.Player.SendErrorMessage("Stack size can't be zero or less.");
+                            return;
+                        }
+                        int money;
+                        if (!int.TryParse(args.Parameters[3], out money))
+                        {
+                            args.Player.SendErrorMessage("Invalid moneyamount.");
+                            return;
+                        }
+                        if (money <= 0)
+                        {
+                            args.Player.SendErrorMessage("Moneyamount can't be zero or less.");
+                            return;
+                        }
+                        Item item = getItem(args.Player, args.Parameters[1], stack);
+                        if (item == null)
+                        {
+                            return;
+                        }
+                        TSPlayer ply = args.Player;
+                        for (int i = 0; i < 50; i++)
+                        {
+                            if (ply.TPlayer.inventory[i].netID == item.netID)
                             {
-                                args.Player.SendErrorMessage("Invalid stack size.");
-                                return;
-                            }
-                            if (stack <= 0)
-                            {
-                                args.Player.SendErrorMessage("Stack size can't be zero or less.");
-                                return;
-                            }
-                            int money;
-                            if (!int.TryParse(args.Parameters[3], out money))
-                            {
-                                args.Player.SendErrorMessage("Invalid moneyamount.");
-                                return;
-                            }
-                            if (money <= 0)
-                            {
-                                args.Player.SendErrorMessage("Moneyamount can't be zero or less.");
-                                return;
-                            }
-                            Item item = getItem(args.Player, args.Parameters[1], stack);
-                            if (item == null)
-                            {
-                                return;
-                            }
-                            TSPlayer ply = args.Player;
-                            for (int i = 0; i < 50; i++)
-                            {
-                                if (ply.TPlayer.inventory[i].netID == item.netID)
+                                if (ply.TPlayer.inventory[i].stack >= stack)
                                 {
-                                    if (ply.TPlayer.inventory[i].stack >= stack)
+                                    database.Query("INSERT INTO trade(Username, ItemID, Itemname, Stack, Moneyamount, Active) VALUES(@0, @1, @2, @3, @4, @5);", args.Player.Name, item.netID, item.Name, stack, money, 1);
+                                    if (ply.TPlayer.inventory[i].stack == stack)
                                     {
-                                        database.Query("INSERT INTO trade(Username, ItemID, Itemname, Stack, Moneyamount, Active) VALUES(@0, @1, @2, @3, @4, @5);", args.Player.Name, item.netID, item.Name, stack, money, 1);
-                                        if (ply.TPlayer.inventory[i].stack == stack)
+                                        ply.TPlayer.inventory[i].SetDefaults(0);
+                                    }
+                                    else
+                                    {
+                                        ply.TPlayer.inventory[i].stack -= stack;
+                                    }
+                                    if (args.Player.Group.HasPermission("geldar.level.5"))
+                                    {
+                                        Money moneyamount = -TradeConfig.contents.level5addcost;
+                                        Money moneyamount2 = TradeConfig.contents.level5addcost;
+                                        if (playeramount >= moneyamount2)
                                         {
-                                            ply.TPlayer.inventory[i].SetDefaults(0);
+                                            NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, NetworkText.Empty, ply.Index, i);
+                                            NetMessage.SendData((int)PacketTypes.PlayerSlot, ply.Index, -1, NetworkText.Empty, ply.Index, i);
+                                            SEconomyPlugin.Instance.WorldAccount.TransferToAsync(selectedPlayer, moneyamount, Journalpayment, string.Format("You paid {0} for adding a trade.", moneyamount2, args.Player.Name), string.Format("Trade add"));
+                                            args.Player.SendInfoMessage("{0} of {1} added for {2} and paid {3} for adding a trade.", stack, args.Parameters[1], money, moneyamount2);
+                                            return;
                                         }
                                         else
                                         {
-                                            ply.TPlayer.inventory[i].stack -= stack;
+                                            args.Player.SendErrorMessage("You need {0} to add trades. You have {1}.", moneyamount2, selectedPlayer.Balance);
+                                            return;
                                         }
-                                        NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, Terraria.Localization.NetworkText.Empty, ply.Index, i);
-                                        NetMessage.SendData((int)PacketTypes.PlayerSlot, ply.Index, -1, Terraria.Localization.NetworkText.Empty, ply.Index, i);
-                                        SEconomyPlugin.Instance.WorldAccount.TransferToAsync(selectedPlayer, moneyamount, Journalpayment, string.Format("You paid {0} for adding a trade.", moneyamount2, args.Player.Name), string.Format("Trade add"));
-                                        args.Player.SendInfoMessage("{0} of {1} added for {2} and paid {3} for adding a trade.", stack, args.Parameters[1], money, moneyamount2);
+                                    }
+                                    else if (args.Player.Group.HasPermission("geldar.level.10"))
+                                    {
+                                        Money moneyamount = -TradeConfig.contents.level10addcost;
+                                        Money moneyamount2 = TradeConfig.contents.level10addcost;
+                                        if (playeramount >= moneyamount2)
+                                        {
+                                            NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, NetworkText.Empty, ply.Index, i);
+                                            NetMessage.SendData((int)PacketTypes.PlayerSlot, ply.Index, -1, NetworkText.Empty, ply.Index, i);
+                                            SEconomyPlugin.Instance.WorldAccount.TransferToAsync(selectedPlayer, moneyamount, Journalpayment, string.Format("You paid {0} for adding a trade.", moneyamount2, args.Player.Name), string.Format("Trade add"));
+                                            args.Player.SendInfoMessage("{0} of {1} added for {2} and paid {3} for adding a trade.", stack, args.Parameters[1], money, moneyamount2);
+                                            return;
+                                        }
+                                        else
+                                        {
+                                            args.Player.SendErrorMessage("You need {0} to add trades. You have {1}.", moneyamount2, selectedPlayer.Balance);
+                                            return;
+                                        }
+                                    }
+                                    else if (args.Player.Group.HasPermission("geldar.level.20"))
+                                    {
+                                        Money moneyamount = -TradeConfig.contents.level20addcost;
+                                        Money moneyamount2 = TradeConfig.contents.level20addcost;
+                                        if (playeramount >= moneyamount2)
+                                        {
+                                            NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, NetworkText.Empty, ply.Index, i);
+                                            NetMessage.SendData((int)PacketTypes.PlayerSlot, ply.Index, -1, NetworkText.Empty, ply.Index, i);
+                                            SEconomyPlugin.Instance.WorldAccount.TransferToAsync(selectedPlayer, moneyamount, Journalpayment, string.Format("You paid {0} for adding a trade.", moneyamount2, args.Player.Name), string.Format("Trade add"));
+                                            args.Player.SendInfoMessage("{0} of {1} added for {2} and paid {3} for adding a trade.", stack, args.Parameters[1], money, moneyamount2);
+                                            return;
+                                        }
+                                        else
+                                        {
+                                            args.Player.SendErrorMessage("You need {0} to add trades. You have {1}.", moneyamount2, selectedPlayer.Balance);
+                                            return;
+                                        }
+                                    }
+                                    else if (args.Player.Group.HasPermission("geldar.level.30"))
+                                    {
+                                        Money moneyamount = -TradeConfig.contents.level30addcost;
+                                        Money moneyamount2 = TradeConfig.contents.level30addcost;
+                                        if (playeramount >= moneyamount2)
+                                        {
+                                            NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, NetworkText.Empty, ply.Index, i);
+                                            NetMessage.SendData((int)PacketTypes.PlayerSlot, ply.Index, -1, NetworkText.Empty, ply.Index, i);
+                                            SEconomyPlugin.Instance.WorldAccount.TransferToAsync(selectedPlayer, moneyamount, Journalpayment, string.Format("You paid {0} for adding a trade.", moneyamount2, args.Player.Name), string.Format("Trade add"));
+                                            args.Player.SendInfoMessage("{0} of {1} added for {2} and paid {3} for adding a trade.", stack, args.Parameters[1], money, moneyamount2);
+                                            return;
+                                        }
+                                        else
+                                        {
+                                            args.Player.SendErrorMessage("You need {0} to add trades. You have {1}.", moneyamount2, selectedPlayer.Balance);
+                                            return;
+                                        }
+                                    }
+                                    else if (args.Player.Group.HasPermission("geldar.level.40"))
+                                    {
+                                        Money moneyamount = -TradeConfig.contents.level40addcost;
+                                        Money moneyamount2 = TradeConfig.contents.level40addcost;
+                                        if (playeramount >= moneyamount2)
+                                        {
+                                            NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, NetworkText.Empty, ply.Index, i);
+                                            NetMessage.SendData((int)PacketTypes.PlayerSlot, ply.Index, -1, NetworkText.Empty, ply.Index, i);
+                                            SEconomyPlugin.Instance.WorldAccount.TransferToAsync(selectedPlayer, moneyamount, Journalpayment, string.Format("You paid {0} for adding a trade.", moneyamount2, args.Player.Name), string.Format("Trade add"));
+                                            args.Player.SendInfoMessage("{0} of {1} added for {2} and paid {3} for adding a trade.", stack, args.Parameters[1], money, moneyamount2);
+                                            return;
+                                        }
+                                        else
+                                        {
+                                            args.Player.SendErrorMessage("You need {0} to add trades. You have {1}.", moneyamount2, selectedPlayer.Balance);
+                                            return;
+                                        }
+                                    }
+                                    else if (args.Player.Group.HasPermission("geldar.level.50"))
+                                    {
+                                        Money moneyamount = -TradeConfig.contents.level50addcost;
+                                        Money moneyamount2 = TradeConfig.contents.level50addcost;
+                                        if (playeramount >= moneyamount2)
+                                        {
+                                            NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, NetworkText.Empty, ply.Index, i);
+                                            NetMessage.SendData((int)PacketTypes.PlayerSlot, ply.Index, -1, NetworkText.Empty, ply.Index, i);
+                                            SEconomyPlugin.Instance.WorldAccount.TransferToAsync(selectedPlayer, moneyamount, Journalpayment, string.Format("You paid {0} for adding a trade.", moneyamount2, args.Player.Name), string.Format("Trade add"));
+                                            args.Player.SendInfoMessage("{0} of {1} added for {2} and paid {3} for adding a trade.", stack, args.Parameters[1], money, moneyamount2);
+                                            return;
+                                        }
+                                        else
+                                        {
+                                            args.Player.SendErrorMessage("You need {0} to add trades. You have {1}.", moneyamount2, selectedPlayer.Balance);
+                                            return;
+                                        }
+                                    }
+                                    else if (args.Player.Group.HasPermission("geldar.level.60"))
+                                    {
+                                        Money moneyamount = -TradeConfig.contents.level60addcost;
+                                        Money moneyamount2 = TradeConfig.contents.level60addcost;
+                                        if (playeramount >= moneyamount2)
+                                        {
+                                            NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, NetworkText.Empty, ply.Index, i);
+                                            NetMessage.SendData((int)PacketTypes.PlayerSlot, ply.Index, -1, NetworkText.Empty, ply.Index, i);
+                                            SEconomyPlugin.Instance.WorldAccount.TransferToAsync(selectedPlayer, moneyamount, Journalpayment, string.Format("You paid {0} for adding a trade.", moneyamount2, args.Player.Name), string.Format("Trade add"));
+                                            args.Player.SendInfoMessage("{0} of {1} added for {2} and paid {3} for adding a trade.", stack, args.Parameters[1], money, moneyamount2);
+                                            return;
+                                        }
+                                        else
+                                        {
+                                            args.Player.SendErrorMessage("You need {0} to add trades. You have {1}.", moneyamount2, selectedPlayer.Balance);
+                                            return;
+                                        }
+                                    }
+                                    else if (args.Player.Group.HasPermission("geldar.level.70") || args.Player.Group.HasPermission("geldar.level.80") || args.Player.Group.HasPermission("geldar.level.90") || args.Player.Group.HasPermission("geldar.level.100"))
+                                    {
+                                        Money moneyamount = -TradeConfig.contents.maxaddcost;
+                                        Money moneyamount2 = TradeConfig.contents.maxaddcost;
+                                        if (playeramount >= moneyamount2)
+                                        {
+                                            NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, NetworkText.Empty, ply.Index, i);
+                                            NetMessage.SendData((int)PacketTypes.PlayerSlot, ply.Index, -1, NetworkText.Empty, ply.Index, i);
+                                            SEconomyPlugin.Instance.WorldAccount.TransferToAsync(selectedPlayer, moneyamount, Journalpayment, string.Format("You paid {0} for adding a trade.", moneyamount2, args.Player.Name), string.Format("Trade add"));
+                                            args.Player.SendInfoMessage("{0} of {1} added for {2} and paid {3} for adding a trade.", stack, args.Parameters[1], money, moneyamount2);
+                                            return;
+                                        }
+                                        else
+                                        {
+                                            args.Player.SendErrorMessage("You need {0} to add trades. You have {1}.", moneyamount2, selectedPlayer.Balance);
+                                            return;
+                                        }
+                                    }                                    
+                                    else
+                                    {
+                                        args.Player.SendErrorMessage("You don't have permission to add trades.");
                                         return;
                                     }
                                 }
                             }
-                            args.Player.SendErrorMessage("you don't have the item or you don't have anough of it.");
-                            args.Player.SendErrorMessage("Item name provided: {0}. Stack: {1}.", item.Name, stack);
-                            return;
                         }
-                        else
-                        {
-                            args.Player.SendErrorMessage("You need {0} to add trades. You have {1}.", moneyamount2, selectedPlayer.Balance);
-                            return;
-                        }
+                        args.Player.SendErrorMessage("you don't have the item or you don't have enough of it.");
+                        args.Player.SendErrorMessage("Item name provided: {0}. Stack: {1}.", item.Name, stack);
+                        return;
                     }
                     else
                     {
@@ -319,7 +454,7 @@ namespace GeldarTrading
                         while (reader.Read())
                         {
                             read = true;
-                            result.Add(String.Format("{0}" + " - " + "{1}" + " - " + "{2}" + " - " + "{3}", reader.Get<int>("ID"), reader.Get<string>("Itemname"), reader.Get<int>("Stack"), reader.Get<int>("Moneyamount")));
+                            result.Add(String.Format("{0}" + " - " + "{1}" + " - " + "{2}" + " - " + "{3} TC", reader.Get<int>("ID"), reader.Get<string>("Itemname"), reader.Get<int>("Stack"), reader.Get<int>("Moneyamount")));
                         }
                         if (!read)
                         {
@@ -331,7 +466,7 @@ namespace GeldarTrading
                     PaginationTools.SendPage(args.Player, pageNumber, result,
                     new PaginationTools.Settings
                     {
-                        MaxLinesPerPage = 50,
+                        MaxLinesPerPage = 10,
                         HeaderFormat = "ID - Itemname - Stack - Cost ({0}/{1})",
                         FooterFormat = "Type {0}trade search {1} {{0}} for more.".SFormat(Commands.Specifier, itemname),
                         NothingToDisplayString = "No items found by that name"
@@ -400,7 +535,7 @@ namespace GeldarTrading
                             else
                             {
                                 args.Player.SendErrorMessage("You don't have enough Terra Coins to buy this item.");
-                                args.Player.SendErrorMessage("You need : {0}. You have: {1}.", money, selectedPlayer.Balance);
+                                args.Player.SendErrorMessage("You need : {0} TC. You have: {1} TC.", money, selectedPlayer.Balance);
                                 return;
                             }
                         }
@@ -506,7 +641,8 @@ namespace GeldarTrading
                     bool read = false;
                     while (reader.Read())
                     {
-                        tradelist.Add(String.Format("{0}" + " - " + "{1}" + " - " + "{2}" + " - " + "{3}", reader.Get<int>("ID"), reader.Get<string>("Itemname"), reader.Get<int>("Stack"), reader.Get<int>("Moneyamount")));
+                        tradelist.Add(String.Format("{0}" + " - " + "{1}" + " - " + "{2}" + " - " + "{3} TC", reader.Get<int>("ID"), reader.Get<string>("Itemname"), reader.Get<int>("Stack"), reader.Get<int>("Moneyamount")));
+                        read = true;
                     }
                     if (!read)
                     {
@@ -516,7 +652,7 @@ namespace GeldarTrading
                     PaginationTools.SendPage(args.Player, pageNumber, tradelist,
                     new PaginationTools.Settings
                     {
-                        MaxLinesPerPage = 50,
+                        MaxLinesPerPage = 15,
                         HeaderFormat = "ID - Itemname - Stack - Cost ({0}/{1})",
                         FooterFormat = "Type {0}trade list {{0}} for more.".SFormat(Commands.Specifier)
                     });
@@ -543,10 +679,12 @@ namespace GeldarTrading
                         args.Player.SendErrorMessage("You don't have anything to collect.");
                         return;
                     }
-                    int transferamount = money.Sum();
-                    database.Query("UPDATE moneyqueue SET Active=@0 WHERE Username=@1 AND Active=@2;", 0, args.Player.Name, 1);
+                    int moneyamount = money.Sum();
+                    double percentage = (moneyamount * 0.9);
+                    int transferamount = Convert.ToInt32(percentage);
+                    database.Query("UPDATE moneyqueue SET Active=@0 WHERE Receiver=@1 AND Active=@2;", 0, args.Player.Name, 1);
                     SEconomyPlugin.Instance.WorldAccount.TransferToAsync(Player, transferamount, BankAccountTransferOptions.AnnounceToReceiver, "Trade collect.", "Trade collect.");
-                    args.Player.SendErrorMessage("You have collected {0} for your finished trades.", transferamount);
+                    args.Player.SendInfoMessage("You have collected {0} Terra Coins for your finished trades.", transferamount);
                 }
             }
             #endregion
@@ -565,7 +703,7 @@ namespace GeldarTrading
                     bool read = false;
                     while (reader.Read())
                     {
-                        check.Add(String.Format("{0}" + " - " + "{1}" + " - " + "{2}" + " - " + "{3}", reader.Get<int>("ID"), reader.Get<string>("Itemname"), reader.Get<int>("Stack"), reader.Get<int>("Moneyamount")));
+                        check.Add(String.Format("{0}" + " - " + "{1}" + " - " + "{2}" + " - " + "{3} TC", reader.Get<int>("ID"), reader.Get<string>("Itemname"), reader.Get<int>("Stack"), reader.Get<int>("Moneyamount")));
                         read = true;
                     }
                     if (!read)
