@@ -181,8 +181,69 @@ namespace GeldarTrading
             {
                 args.Player.SendInfoMessage("Double qoutes around item names are required.");
                 args.Player.SendInfoMessage("Available commands /trade add/search/accep/cancel/list/collect/check.");
+                args.Player.SendInfoMessage("Use /trade cost to get info about the trade costs.");
                 return;
             }
+
+            #region Trade cost
+            if (args.Parameters.Count > 0 && args.Parameters[0].ToLower() == "cost")
+            {
+                if (args.Player.Group.HasPermission("geldar.level.5"))
+                {
+                    args.Player.SendInfoMessage("For you, adding a trade costs: {0} Terra Coins.", TradeConfig.contents.level5addcost);
+                    args.Player.SendInfoMessage("The bank cuts off 10% at each money collection.");
+                    return;
+                }
+                else if (args.Player.Group.HasPermission("geldar.level.10"))
+                {
+                    args.Player.SendInfoMessage("For you, adding a trade costs: {0} Terra Coins.", TradeConfig.contents.level10addcost);
+                    args.Player.SendInfoMessage("The bank cuts off 10% at each money collection.");
+                    return;
+                }
+                else if (args.Player.Group.HasPermission("geldar.level.20"))
+                {
+                    args.Player.SendInfoMessage("For you, adding a trade costs: {0} Terra Coins.", TradeConfig.contents.level20addcost);
+                    args.Player.SendInfoMessage("The bank cuts off 10% at each money collection.");
+                    return;
+                }
+                else if (args.Player.Group.HasPermission("geldar.level.30"))
+                {
+                    args.Player.SendInfoMessage("For you, adding a trade costs: {0} Terra Coins.", TradeConfig.contents.level30addcost);
+                    args.Player.SendInfoMessage("The bank cuts off 10% at each money collection.");
+                    return;
+                }
+                else if (args.Player.Group.HasPermission("geldar.level.40"))
+                {
+                    args.Player.SendInfoMessage("For you, adding a trade costs: {0} Terra Coins.", TradeConfig.contents.level40addcost);
+                    args.Player.SendInfoMessage("The bank cuts off 10% at each money collection.");
+                    return;
+                }
+                else if (args.Player.Group.HasPermission("geldar.level.50"))
+                {
+                    args.Player.SendInfoMessage("For you, adding a trade costs: {0} Terra Coins.", TradeConfig.contents.level50addcost);
+                    args.Player.SendInfoMessage("The bank cuts off 10% at each money collection.");
+                    return;
+                }
+                else if (args.Player.Group.HasPermission("geldar.level.60"))
+                {
+                    args.Player.SendInfoMessage("For you, adding a trade costs: {0} Terra Coins.", TradeConfig.contents.level60addcost);
+                    args.Player.SendInfoMessage("The bank cuts off 10% at each money collection.");
+                    return;
+                }
+                else if (args.Player.Group.HasPermission("geldar.level.70") || args.Player.Group.HasPermission("geldar.level.80") || args.Player.Group.HasPermission("geldar.level.90") || args.Player.Group.HasPermission("geldar.level.100"))
+                {
+                    args.Player.SendInfoMessage("For you, adding a trade costs: {0} Terra Coins.", TradeConfig.contents.maxaddcost);
+                    args.Player.SendInfoMessage("The bank cuts off 10% at each money collection.");
+                    return;
+                }
+                else
+                {
+                    args.Player.SendErrorMessage("You don't have permission to trade.");
+                    return;
+                }
+
+            }
+            #endregion
 
             #region Trade add
             if (args.Parameters.Count > 0 && args.Parameters[0].ToLower() == "add")
@@ -193,8 +254,7 @@ namespace GeldarTrading
                     args.Player.SendInfoMessage("Important: Traded item will lose its prefix.");
                     args.Player.SendInfoMessage("Info:    /trade add \"item name\" amount moneyamount");
                     args.Player.SendInfoMessage("Example: /trade add \"Cactus Sword\" 1 100");
-                    args.Player.SendInfoMessage("Info: There is a trade add cost which grows by level.");
-                    //trade add costs missing
+                    args.Player.SendInfoMessage("Info: There is a trade add cost which grows by level.");                    
                     return;
                 }
 
