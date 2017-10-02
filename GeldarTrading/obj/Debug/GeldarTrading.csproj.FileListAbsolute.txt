@@ -5,3 +5,11 @@ C:\Users\tygra\Desktop\Plugins\GeldarTrading\GeldarTrading\obj\Debug\GeldarTradi
 C:\Users\tygra\Desktop\Plugins\GeldarTrading\GeldarTrading\obj\Debug\GeldarTrading.dll
 C:\Users\tygra\Desktop\Plugins\GeldarTrading\GeldarTrading\obj\Debug\GeldarTrading.pdb
 C:\Users\Tygra\Desktop\Plugins\GeldarTrading\GeldarTrading\obj\Debug\GeldarTrading.csprojResolveAssemblyReference.cache
+C:\Users\tygra\Desktop\Plugins\GeldarTrading\GeldarTrading\bin\Debug\Mono.Data.Sqlite.dll
+C:\Users\tygra\Desktop\Plugins\GeldarTrading\GeldarTrading\bin\Debug\MySql.Data.dll
+C:\Users\tygra\Desktop\Plugins\GeldarTrading\GeldarTrading\bin\Debug\Newtonsoft.Json.dll
+C:\Users\tygra\Desktop\Plugins\GeldarTrading\GeldarTrading\bin\Debug\OTAPI.dll
+C:\Users\tygra\Desktop\Plugins\GeldarTrading\GeldarTrading\bin\Debug\TerrariaServer.exe
+C:\Users\tygra\Desktop\Plugins\GeldarTrading\GeldarTrading\bin\Debug\TShockAPI.dll
+C:\Users\tygra\Desktop\Plugins\GeldarTrading\GeldarTrading\bin\Debug\HttpServer.dll
+C:\Users\tygra\Desktop\Plugins\GeldarTrading\GeldarTrading\bin\Debug\BCrypt.Net.dll

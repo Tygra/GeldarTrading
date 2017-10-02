@@ -58,7 +58,7 @@
     </Reference>
     <Reference Include="Wolfje.Plugins.SEconomy, Version=1.0.21.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\GeldarV2\GeldarV2\bin\Debug\Wolfje.Plugins.SEconomy.dll</HintPath>
+      <HintPath>..\..\GeldarV2\bin\Debug\Wolfje.Plugins.SEconomy.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

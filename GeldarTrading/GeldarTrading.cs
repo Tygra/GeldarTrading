@@ -314,9 +314,17 @@ namespace GeldarTrading
                     List<string> result = new List<string>();
                     using (var reader = database.QueryReader("SELECT * FROM trade WHERE Itemname=@0 AND Active=@1;", itemname, 1))
                     {
+                        bool read = false;
                         while (reader.Read())
                         {
+                            read = true;
                             result.Add(String.Format("{0}" + " - " + "{1}" + " - " + "{2}" + " - " + "{3}", reader.Get<int>("ID"), reader.Get<string>("Itemname"), reader.Get<int>("Stack"), reader.Get<int>("Moneyamount")));
+                        }
+                        if (!read)
+                        {
+                            args.Player.SendErrorMessage("No items found by that name.");
+                            args.Player.SendErrorMessage("Item name provided: {0}.", itemname);
+                            return;
                         }
                     }
                     PaginationTools.SendPage(args.Player, pageNumber, result,
@@ -354,7 +362,7 @@ namespace GeldarTrading
                     }
                     if (args.Player.InventorySlotAvailable)
                     {
-                        using (var reader = database.QueryReader("SELECT * FROM trade WHERE ID=@;", id))
+                        using (var reader = database.QueryReader("SELECT * FROM trade WHERE ID=@0 AND Active=@1;", id, 1))
                         {
                             while (reader.Read())
                             {
@@ -365,12 +373,11 @@ namespace GeldarTrading
                                 amount.Add(reader.Get<int>("Stack"));
                             }
                         }
-                        string receiver = username.ElementAt(0);
-                        string itemname = itemName.ElementAt(0);
-                        int money = cost.ElementAt(0);
-                        int item = itemid.ElementAt(0);
-                        int stack = amount.ElementAt(0);
-                        args.Player.SendInfoMessage(receiver, money, item, stack, itemname);
+                        string receiver = username.FirstOrDefault();
+                        string itemname = itemName.FirstOrDefault();
+                        int money = cost.FirstOrDefault();
+                        int item = itemid.FirstOrDefault();
+                        int stack = amount.FirstOrDefault();
                         if (playeramount >= money)
                         {
                             database.Query("UPDATE trade SET Active=@0 WHERE ID=@1;", 0, id);
@@ -378,6 +385,7 @@ namespace GeldarTrading
                             SEconomyPlugin.Instance.WorldAccount.TransferToAsync(selectedPlayer, money, Journalpayment, string.Format("You paid {0} for {1} of {2}.", money, stack, itemname, args.Player.Name), string.Format("Trade accept. TC: {0}. Item: {1}", money, itemname));
                             Item itemById = TShock.Utils.GetItemById(item);
                             args.Player.GiveItem(itemById.type, itemById.Name, itemById.width, itemById.height, stack, 0);
+                            args.Player.SendInfoMessage("You paid {0} for {1} {2}.", money, stack, itemname);
                         }
                         else
                         {

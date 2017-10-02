@@ -1,0 +1,4 @@
+[10/02/17 02:41:12] [Server API] Verbose: TerrariaApi - Server v2.1.0.0 started.
+[10/02/17 02:41:12] [Server API] Verbose: 	Command line: "E:\GeldarTrading\GeldarTrading\bin\Debug\TerrariaServer.exe" 
+[10/02/17 02:41:12] [Server API] Verbose: 	OS: Microsoft Windows NT 6.2.9200.0 (64bit: True)
+[10/02/17 02:41:12] [Server API] Verbose: 	Mono: False
