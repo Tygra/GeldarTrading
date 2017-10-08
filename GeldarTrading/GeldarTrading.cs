@@ -265,13 +265,13 @@ namespace GeldarTrading
                     var playeramount = selectedPlayer.Balance;
                     var player = Playerlist[args.Player.Index];
                     QueryResult reader;
-                    List<string> activequests = new List<string>();
+                    List<string> activetrades = new List<string>();
                     reader = database.QueryReader("SELECT * FROM trade WHERE Username=@0 AND Active=@1;", args.Player.Name, 1);
                     if (reader.Read())
                     {
-                        activequests.Add(reader.Get<string>("Username"));
+                        activetrades.Add(reader.Get<string>("Username"));
                     }
-                    if (activequests.Count < 5)
+                    if (activetrades.Count < 5)
                     {
                         int stack;
                         if (!int.TryParse(args.Parameters[2], out stack))
@@ -468,7 +468,7 @@ namespace GeldarTrading
                                 }
                             }
                         }
-                        args.Player.SendErrorMessage("you don't have the item or you don't have enough of it.");
+                        args.Player.SendErrorMessage("You don't have the item or you don't have enough of it.");
                         args.Player.SendErrorMessage("Item name provided: {0}. Stack: {1}.", item.Name, stack);
                         return;
                     }
