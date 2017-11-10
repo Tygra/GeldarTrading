@@ -591,6 +591,7 @@ namespace GeldarTrading
                                 Item itemById = TShock.Utils.GetItemById(item);
                                 args.Player.GiveItem(itemById.type, itemById.Name, itemById.width, itemById.height, stack, 0);
                                 args.Player.SendInfoMessage("You paid {0} for {1} {2}.", money, stack, itemname);
+                                return;
                             }
                             else
                             {
@@ -665,6 +666,7 @@ namespace GeldarTrading
                             Item itemById = TShock.Utils.GetItemById(itemid);
                             args.Player.GiveItem(itemById.type, itemById.Name, itemById.width, itemById.height, stack, 0);
                             args.Player.SendInfoMessage("Your trade with the ID: {0} has been canceled. You got {1} {2}(s) back.", id, stack, iname);
+                            return;
                         }
                         else
                         {
@@ -739,12 +741,14 @@ namespace GeldarTrading
                         args.Player.SendErrorMessage("You don't have anything to collect.");
                         return;
                     }
-                    int moneyamount = money.Sum();
+                    int moneyamount = money.Sum();                    
                     double percentage = (moneyamount * 0.9);
                     int transferamount = Convert.ToInt32(percentage);
+                    int cutoff = moneyamount - transferamount;
                     database.Query("UPDATE moneyqueue SET Active=@0 WHERE Receiver=@1 AND Active=@2;", 0, args.Player.Name, 1);
                     SEconomyPlugin.Instance.WorldAccount.TransferToAsync(Player, transferamount, BankAccountTransferOptions.AnnounceToReceiver, "Trade collect.", "Trade collect.");
                     args.Player.SendInfoMessage("You have collected {0} Terra Coins for your finished trades.", transferamount);
+                    args.Player.SendInfoMessage("{0} has been cut off as tax, to sustain capitalism.", cutoff);
                 }
             }
             #endregion
