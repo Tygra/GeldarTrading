@@ -306,8 +306,7 @@ namespace GeldarTrading
                             if (ply.TPlayer.inventory[i].netID == item.netID)
                             {
                                 if (ply.TPlayer.inventory[i].stack >= stack)
-                                {
-                                    database.Query("INSERT INTO trade(Username, ItemID, Itemname, Stack, Moneyamount, Active) VALUES(@0, @1, @2, @3, @4, @5);", args.Player.Name, item.netID, item.Name, stack, money, 1);
+                                {                                    
                                     if (ply.TPlayer.inventory[i].stack == stack)
                                     {
                                         ply.TPlayer.inventory[i].SetDefaults(0);
@@ -324,6 +323,7 @@ namespace GeldarTrading
                                         {
                                             NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, NetworkText.Empty, ply.Index, i);
                                             NetMessage.SendData((int)PacketTypes.PlayerSlot, ply.Index, -1, NetworkText.Empty, ply.Index, i);
+                                            database.Query("INSERT INTO trade(Username, ItemID, Itemname, Stack, Moneyamount, Active) VALUES(@0, @1, @2, @3, @4, @5);", args.Player.Name, item.netID, item.Name, stack, money, 1);
                                             SEconomyPlugin.Instance.WorldAccount.TransferToAsync(selectedPlayer, moneyamount, Journalpayment, string.Format("You paid {0} for adding a trade.", moneyamount2, args.Player.Name), string.Format("Trade add"));
                                             args.Player.SendInfoMessage("{0} of {1} added for {2} and paid {3} for adding a trade.", stack, args.Parameters[1], money, moneyamount2);
                                             return;
@@ -342,6 +342,7 @@ namespace GeldarTrading
                                         {
                                             NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, NetworkText.Empty, ply.Index, i);
                                             NetMessage.SendData((int)PacketTypes.PlayerSlot, ply.Index, -1, NetworkText.Empty, ply.Index, i);
+                                            database.Query("INSERT INTO trade(Username, ItemID, Itemname, Stack, Moneyamount, Active) VALUES(@0, @1, @2, @3, @4, @5);", args.Player.Name, item.netID, item.Name, stack, money, 1);
                                             SEconomyPlugin.Instance.WorldAccount.TransferToAsync(selectedPlayer, moneyamount, Journalpayment, string.Format("You paid {0} for adding a trade.", moneyamount2, args.Player.Name), string.Format("Trade add"));
                                             args.Player.SendInfoMessage("{0} of {1} added for {2} and paid {3} for adding a trade.", stack, args.Parameters[1], money, moneyamount2);
                                             return;
@@ -360,6 +361,7 @@ namespace GeldarTrading
                                         {
                                             NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, NetworkText.Empty, ply.Index, i);
                                             NetMessage.SendData((int)PacketTypes.PlayerSlot, ply.Index, -1, NetworkText.Empty, ply.Index, i);
+                                            database.Query("INSERT INTO trade(Username, ItemID, Itemname, Stack, Moneyamount, Active) VALUES(@0, @1, @2, @3, @4, @5);", args.Player.Name, item.netID, item.Name, stack, money, 1);
                                             SEconomyPlugin.Instance.WorldAccount.TransferToAsync(selectedPlayer, moneyamount, Journalpayment, string.Format("You paid {0} for adding a trade.", moneyamount2, args.Player.Name), string.Format("Trade add"));
                                             args.Player.SendInfoMessage("{0} of {1} added for {2} and paid {3} for adding a trade.", stack, args.Parameters[1], money, moneyamount2);
                                             return;
@@ -378,6 +380,7 @@ namespace GeldarTrading
                                         {
                                             NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, NetworkText.Empty, ply.Index, i);
                                             NetMessage.SendData((int)PacketTypes.PlayerSlot, ply.Index, -1, NetworkText.Empty, ply.Index, i);
+                                            database.Query("INSERT INTO trade(Username, ItemID, Itemname, Stack, Moneyamount, Active) VALUES(@0, @1, @2, @3, @4, @5);", args.Player.Name, item.netID, item.Name, stack, money, 1);
                                             SEconomyPlugin.Instance.WorldAccount.TransferToAsync(selectedPlayer, moneyamount, Journalpayment, string.Format("You paid {0} for adding a trade.", moneyamount2, args.Player.Name), string.Format("Trade add"));
                                             args.Player.SendInfoMessage("{0} of {1} added for {2} and paid {3} for adding a trade.", stack, args.Parameters[1], money, moneyamount2);
                                             return;
@@ -396,6 +399,7 @@ namespace GeldarTrading
                                         {
                                             NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, NetworkText.Empty, ply.Index, i);
                                             NetMessage.SendData((int)PacketTypes.PlayerSlot, ply.Index, -1, NetworkText.Empty, ply.Index, i);
+                                            database.Query("INSERT INTO trade(Username, ItemID, Itemname, Stack, Moneyamount, Active) VALUES(@0, @1, @2, @3, @4, @5);", args.Player.Name, item.netID, item.Name, stack, money, 1);
                                             SEconomyPlugin.Instance.WorldAccount.TransferToAsync(selectedPlayer, moneyamount, Journalpayment, string.Format("You paid {0} for adding a trade.", moneyamount2, args.Player.Name), string.Format("Trade add"));
                                             args.Player.SendInfoMessage("{0} of {1} added for {2} and paid {3} for adding a trade.", stack, args.Parameters[1], money, moneyamount2);
                                             return;
@@ -414,6 +418,7 @@ namespace GeldarTrading
                                         {
                                             NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, NetworkText.Empty, ply.Index, i);
                                             NetMessage.SendData((int)PacketTypes.PlayerSlot, ply.Index, -1, NetworkText.Empty, ply.Index, i);
+                                            database.Query("INSERT INTO trade(Username, ItemID, Itemname, Stack, Moneyamount, Active) VALUES(@0, @1, @2, @3, @4, @5);", args.Player.Name, item.netID, item.Name, stack, money, 1);
                                             SEconomyPlugin.Instance.WorldAccount.TransferToAsync(selectedPlayer, moneyamount, Journalpayment, string.Format("You paid {0} for adding a trade.", moneyamount2, args.Player.Name), string.Format("Trade add"));
                                             args.Player.SendInfoMessage("{0} of {1} added for {2} and paid {3} for adding a trade.", stack, args.Parameters[1], money, moneyamount2);
                                             return;
@@ -432,6 +437,7 @@ namespace GeldarTrading
                                         {
                                             NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, NetworkText.Empty, ply.Index, i);
                                             NetMessage.SendData((int)PacketTypes.PlayerSlot, ply.Index, -1, NetworkText.Empty, ply.Index, i);
+                                            database.Query("INSERT INTO trade(Username, ItemID, Itemname, Stack, Moneyamount, Active) VALUES(@0, @1, @2, @3, @4, @5);", args.Player.Name, item.netID, item.Name, stack, money, 1);
                                             SEconomyPlugin.Instance.WorldAccount.TransferToAsync(selectedPlayer, moneyamount, Journalpayment, string.Format("You paid {0} for adding a trade.", moneyamount2, args.Player.Name), string.Format("Trade add"));
                                             args.Player.SendInfoMessage("{0} of {1} added for {2} and paid {3} for adding a trade.", stack, args.Parameters[1], money, moneyamount2);
                                             return;
@@ -450,6 +456,7 @@ namespace GeldarTrading
                                         {
                                             NetMessage.SendData((int)PacketTypes.PlayerSlot, -1, -1, NetworkText.Empty, ply.Index, i);
                                             NetMessage.SendData((int)PacketTypes.PlayerSlot, ply.Index, -1, NetworkText.Empty, ply.Index, i);
+                                            database.Query("INSERT INTO trade(Username, ItemID, Itemname, Stack, Moneyamount, Active) VALUES(@0, @1, @2, @3, @4, @5);", args.Player.Name, item.netID, item.Name, stack, money, 1);
                                             SEconomyPlugin.Instance.WorldAccount.TransferToAsync(selectedPlayer, moneyamount, Journalpayment, string.Format("You paid {0} for adding a trade.", moneyamount2, args.Player.Name), string.Format("Trade add"));
                                             args.Player.SendInfoMessage("{0} of {1} added for {2} and paid {3} for adding a trade.", stack, args.Parameters[1], money, moneyamount2);
                                             return;
